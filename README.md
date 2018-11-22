@@ -16,30 +16,29 @@ Swoft集成微服务治理框架Tars
 
 ### 使用
 
-1、生成server接口文件和client调用文件
+1. 生成server接口文件和client调用文件
 
-cd scripts
-./tars2php.sh
-./tarsclient.php
+    cd scripts
 
-2、启动tars-server
+    ./tars2php.sh
 
-cd src
+    ./tarsclient.sh
 
-php index.php
+2. 启动tars-server
 
+    cd src
 
-3、调用测试
+    php index.php
 
-浏览器访问以下地址测试使用tars协议调用的结果
+3. 调用测试
 
-swoft协程调用
-http://localhost:7999/rpc/tarsClient
+    浏览器访问以下地址测试使用tars协议调用的结果
 
-swoft同步调用
-http://localhost:7999/rpc/tarsClient1
+    swoft协程调用
+    http://localhost:7999/rpc/tarsClient
 
-tars-client方式调用
-http://localhost:7999/rpc/tarsClient2
+    swoft同步调用
+    http://localhost:7999/rpc/tarsClient1
 
-
+    tars-client方式调用
+    http://localhost:7999/rpc/tarsClient2
