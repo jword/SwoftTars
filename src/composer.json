@@ -1,0 +1,78 @@
+{
+    "name": "jword/SwoftTars",
+    "type": "project",
+    "keywords": [
+        "php",
+        "swoole",
+        "swoft"
+    ],
+    "description": "Modern High performance AOP and Coroutine PHP Framework, base on Swoole 2",
+    "license": "Apache-2.0",
+    "require": {
+        "php": ">=7.0",
+        "swoft/framework": "~1.0.20",
+        "swoft/rpc": "~1.0.0",
+        "swoft/rpc-server": "~1.0.2",
+        "swoft/rpc-client": "~1.0.4",
+        "swoft/http-server": "~1.0.5",
+        "swoft/http-client": "~1.0.6",
+        "swoft/websocket-server": "~1.0.2",
+        "swoft/task": "~1.0.5",
+        "swoft/http-message": "~1.0.0",
+        "swoft/view": "~1.0.1",
+        "swoft/db": "~1.1.13",
+        "swoft/cache": "~1.0.3",
+        "swoft/redis": "~1.0.9",
+        "swoft/console": "~1.0.7",
+        "swoft/devtool": "~1.0.8",
+        "swoft/session": "~1.0.3",
+        "swoft/i18n": "~1.0.1",
+        "swoft/process": "~1.0.4",
+        "swoft/memory": "~1.0.1",
+        "swoft/service-governance": "~1.0.1",
+        "phptars/tars-registry": "~0.1.0",
+        "phptars/tars-deploy": "~0.1.0",
+        "phptars/tars-utils": "~0.1.0",
+        "phptars/tars-report": "~0.1.0",
+        "phptars/tars-client": "~0.1.0",
+        "phptars/tars2php": "~0.1.0",
+        "phptars/tars-server": "~0.1",
+        "ext-zip" : ">=0.0.1"
+    },
+    "require-dev": {
+        "eaglewu/swoole-ide-helper": "dev-master",
+        "phpunit/phpunit": "^5.7"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Conf\\": "conf/"
+        },
+        "files": [
+            "app/Swoft.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Swoft\\Test\\": "test/"
+        }
+    },
+    "minimum-stability": "stable",
+    "scripts": {
+        "deploy" : "\\Tars\\deploy\\Deploy::run",
+        "post-root-package-install": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+        ],
+        "test": "./vendor/bin/phpunit -c phpunit.xml",
+        "post-autoload-dump": [
+            "cp -f patch/Service.php vendor/swoft/rpc-client/src/Service.php",
+            "cp -f patch/ServiceCoResult.php vendor/swoft/rpc-client/src/Service/ServiceCoResult.php"
+        ]
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://packagist.phpcomposer.com"
+        }
+    ]
+}
