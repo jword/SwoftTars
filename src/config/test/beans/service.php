@@ -8,6 +8,8 @@ return [
         ],
     ],
     'ServiceDispatcher' => [
-        'class' => \App\Lib\Tars\Server\ServiceDispatcher::class,
+        'middlewares' => [
+            \App\Lib\Tars\Server\ResultDealMiddleware::class,
+        ],
     ],
 ];

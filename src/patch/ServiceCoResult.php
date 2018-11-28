@@ -35,6 +35,10 @@ class ServiceCoResult extends AbstractResult
             //patch
             $result = $packer->unpack($result, $this->packerName);
             $data   = $packer->checkData($result);
+            //上报结果
+            if ($this->packerName == 'tarsclient') {
+                \App\Lib\Tars\Client\Helper::report($result['unpackResult']['sServantName'], $result['unpackResult']['sFuncName'], 0);
+            }
         } catch (\Throwable $throwable) {
             if (empty($this->fallbackData)) {
                 throw $throwable;

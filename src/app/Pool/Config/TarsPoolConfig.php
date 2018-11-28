@@ -117,9 +117,20 @@ class TarsPoolConfig extends PoolProperties
     protected $provider = '';
 
     /**
-     *
      * @Value(name="${config.service.tars.packer}", env="${TARS_POOL_PACKER}")
      * @var string
      */
     private $packer = "";
+
+    /**
+     * @return array
+     */
+    public function getUri(): array
+    {
+        if ($uri = \App\Lib\Tars\Client\Helper::getUri()) {
+            return $uri;
+        }
+
+        return $this->uri;
+    }
 }

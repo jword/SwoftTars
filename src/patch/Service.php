@@ -85,14 +85,21 @@ class Service
         $closeStatus = true;
 
         try {
+            $type = $this->getPackerName();
+            if ($type == 'tarsclient') {
+                $config      = App::$properties['tars'];
+                $servant     = str_replace($config['ServerNamespacePrefix'], '', $this->interface);
+                $servant     = explode('\\', $servant);
+                $servantName = $servant[1] . '.' . $servant[2] . '.' . $servant[3];
+                \Swoft\Core\RequestContext::setContextDataByKey('servantName', $servantName);
+            }
             $connectPool    = $this->getPool();
             $circuitBreaker = $this->getBreaker();
 
             /* @var $client AbstractServiceConnection */
             $client = $connectPool->getConnection();
+            $packer = service_packer();
 
-            $packer   = service_packer();
-            $type     = $this->getPackerName();
             $data     = $packer->formatData($this->interface, $this->version, $func, $params);
             $packData = $packer->pack($data, $type);
 
@@ -133,6 +140,10 @@ class Service
             $result      = $packer->unpack($result, $type);
             $closeStatus = false;
             $data        = $packer->checkData($result);
+            //上报结果
+            if ($type == 'tarsclient') {
+                \App\Lib\Tars\Client\Helper::report($servantName, $func, 0);
+            }
         } catch (\Throwable $throwable) {
             // If the client is normal, no need to close it.
             if ($closeStatus && isset($client) && $client instanceof AbstractServiceConnection) {
@@ -149,6 +160,10 @@ class Service
                 throw $throwable;
             }
             $data = PhpHelper::call($fallback, $params);
+            //上报异常
+            if ($type == 'tarsclient') {
+                \App\Lib\Client\Helper::report($servantName, $func, $throwable->getCode());
+            }
         }
 
         return $data;
@@ -193,6 +208,14 @@ class Service
         $fallback   = $this->getFallbackHandler($func);
 
         try {
+            $type = $this->getPackerName();
+            if ($type == 'tarsclient') {
+                $config      = App::$properties['tars'];
+                $servant     = str_replace($config['ServerNamespacePrefix'], '', $this->interface);
+                $servant     = explode('\\', $servant);
+                $servantName = $servant[1] . '.' . $servant[2] . '.' . $servant[3];
+                \Swoft\Core\RequestContext::setContextDataByKey('servantName', $servantName);
+            }
             $connectPool    = $this->getPool();
             $circuitBreaker = $this->getBreaker();
 
@@ -200,7 +223,6 @@ class Service
             $connection = $connectPool->getConnection();
 
             $packer   = service_packer();
-            $type     = $this->getPackerName();
             $data     = $packer->formatData($this->interface, $this->version, $func, $params);
             $packData = $packer->pack($data, $type);
 
@@ -216,6 +238,9 @@ class Service
 
             $connection = null;
             $result     = PhpHelper::call($fallback, $params);
+            if ($type == 'tarsclient') {
+                \App\Lib\Client\Helper::report($servantName, $func, $throwable->getCode());
+            }
         }
 
         return $this->getResult($connection, $profileKey, $result);

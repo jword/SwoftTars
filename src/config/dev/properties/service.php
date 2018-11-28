@@ -4,7 +4,6 @@ return [
         'name'        => 'user',
         'uri'         => [
             '127.0.0.1:8099',
-            '127.0.0.1:8099',
         ],
         'minActive'   => 8,
         'maxActive'   => 1000,
@@ -19,7 +18,6 @@ return [
     'tars'    => [
         'name'        => 'tars',
         'uri'         => [
-            '127.0.0.1:8099',
             '127.0.0.1:8099',
         ],
         'minActive'   => 8,
@@ -36,7 +34,6 @@ return [
     'default' => [
         'name'        => 'default',
         'uri'         => [
-            '127.0.0.1:8099',
             '127.0.0.1:8099',
         ],
         'minActive'   => 8,

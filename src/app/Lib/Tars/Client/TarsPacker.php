@@ -72,10 +72,12 @@ class TarsPacker implements PackerInterface
         $method                  = $decodeRet['sFuncName'];
         $params                  = RequestContext::getContextDataByKey('requestparams');
         $returnVal               = $servant->$method(...$params);
+        //RequestContext::setContextDataByKey('requestparams', $params);
         return [
-            'status' => 200,
-            'msg'    => '',
-            'data'   => $returnVal ?: '',
+            'status'       => 200,
+            'msg'          => '',
+            'data'         => $returnVal ?: '',
+            'unpackResult' => $decodeRet,
         ];
     }
 }

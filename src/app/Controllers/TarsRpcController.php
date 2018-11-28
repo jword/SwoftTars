@@ -93,7 +93,7 @@ class TarsRpcController
         $result1   = $this->tarsService->testReturn();
         $result2   = $this->tarsService->testReturn2();
         $result3   = $this->tarsService->sayHelloWorld($name, $greetings);
-        return compact('result1', 'result2', 'result3');
+        return compact('result1', 'result2', 'result3', 'greetings');
     }
 
     /**
@@ -101,10 +101,12 @@ class TarsRpcController
      */
     public function tarsClient2()
     {
-        $route['sIp']   = '127.0.0.1';
-        $route['iPort'] = 8099;
-        $routeInfo[]    = $route;
-        $config         = new \Tars\client\CommunicatorConfig();
+        $routeInfo = [
+            ['sIp' => '127.0.0.1', 'iPort' => 8099],
+        ];
+        $config = new \Tars\client\CommunicatorConfig();
+        //$config->setLocator("tars.tarsregistry.QueryObj@tcp -h 192.168.8.58 -p 17890");
+        //$config->init(BASE_PATH . '/conf/test.config.conf');
         $config->setRouteInfo($routeInfo);
         $config->setSocketMode(3); //1标识socket 2标识swoole同步 3标识swoole协程
         $config->setModuleName('SwoftDemo.Demo.TarsDemo');
@@ -112,22 +114,12 @@ class TarsRpcController
         $servant = new \App\TarsClient\SwoftDemo\Demo\TarsDemo\TarsDemoServiceServant($config);
         echo "Service ip and port specified with socket mode 2 (swoole client)\n";
 
-        //成功
-        $result1 = $servant->testReturn();
-        var_dump('testReturn:');
-        var_dump($result1);
-
-        $c = $servant->testReturn2();
-        var_dump('testReturn2:');
-        var_dump($c);
-
+        $result1   = $servant->testReturn();
+        $result2   = $servant->testReturn2();
         $name      = 'ted';
         $greetings = 44;
         $result    = $servant->sayHelloWorld($name, $greetings);
-        var_dump('sayHelloWorld:');
-        var_dump($result);
-        var_dump($greetings);
 
-        return compact('result1', 'c', 'name', 'greetings');
+        return compact('result1', 'result2', 'name', 'greetings');
     }
 }
