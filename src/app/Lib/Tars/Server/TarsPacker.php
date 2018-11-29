@@ -24,27 +24,37 @@ class TarsPacker implements PackerInterface
      */
     public function pack($data): string
     {
-        $sFuncName    = $data['requestdata']['method'];
-        $args         = $data['requestdata']['params'];
-        $unpackResult = $data['requestdata']['unpackResult'];
+        if ($data['status'] != 200) {
+            //异常的情况
+            $unpackResult = [
+                'iVersion'   => 1,
+                'iRequestId' => 0,
+            ];
+            $rspBuf = $this->getProtocol()->packErrRsp($unpackResult, $data['status'], $data['msg']);
+        } else {
 
-        //优化
-        $paramInfos = [];
-        $interface  = new \ReflectionClass($data['requestdata']['interface']);
-        $methods    = $interface->getMethods();
-        foreach ($methods as $method) {
-            $docblock = $method->getDocComment();
-            // 对于注释也应该有自己的定义和解析的方式
-            $paramInfos[$method->name] = $this->getProtocol()->parseAnnotation($docblock);
+            $sFuncName    = $data['requestdata']['method'];
+            $args         = $data['requestdata']['params'];
+            $unpackResult = $data['requestdata']['unpackResult'];
+
+            //优化
+            $paramInfos = [];
+            $interface  = new \ReflectionClass($data['requestdata']['interface']);
+            $methods    = $interface->getMethods();
+            foreach ($methods as $method) {
+                $docblock = $method->getDocComment();
+                // 对于注释也应该有自己的定义和解析的方式
+                $paramInfos[$method->name] = $this->getProtocol()->parseAnnotation($docblock);
+            }
+
+            if (!isset($paramInfos[$sFuncName])) {
+                return '';
+                //throw new \Exception(Code::TARSSERVERUNKNOWNERR);
+            }
+
+            $paramInfo = $paramInfos[$sFuncName];
+            $rspBuf    = $this->getProtocol()->packRsp($paramInfo, $unpackResult, $args, $data['data']);
         }
-
-        if (!isset($paramInfos[$sFuncName])) {
-            return '';
-            //throw new \Exception(Code::TARSSERVERUNKNOWNERR);
-        }
-
-        $paramInfo = $paramInfos[$sFuncName];
-        $rspBuf    = $this->getProtocol()->packRsp($paramInfo, $unpackResult, $args, $data['data']);
         return $rspBuf;
     }
 

@@ -16,7 +16,9 @@ class Helper
     public static function report($servantName, $funcName, $code = 0, $ip = '', $port = '')
     {
         $config = \Tars\Conf::get();
-        var_dump($config);
+        if (empty($config)) {
+            return true;
+        }
         $locator        = $config['tars']['application']['client']['locator'];
         $socketMode     = self::getsocketMode();
         $startTime      = \Swoft\Core\RequestContext::getContextDataByKey('requestTime');
@@ -34,6 +36,9 @@ class Helper
         if ($servantName) {
             //从配置中读取
             $config = \Tars\Conf::get();
+            if (empty($config)) {
+                return null;
+            }
             if ($config['tars']['application']['enableset'] == 'Y') {
                 $setid = $config['tars']['application']['setdivision'];
             }
@@ -42,7 +47,6 @@ class Helper
             $locator    = $config['tars']['application']['client']['locator'];
             $query      = new QueryFWrapper($locator, $socketMode);
 
-            //$servantName = 'PHPTest.PHPServer.obj';
             if (!empty($setid)) {
                 $activeEp = $inactiveEp = null;
                 $routes   = $query->findObjectByIdInSameSet($servantName, $setid, $activeEp, $inactiveEp);
