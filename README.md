@@ -24,7 +24,7 @@ Swoft集成微服务治理框架Tars
 
 ###计划实现的特性
 
-* 服务端异常处理
+* ~~服务端异常处理(2018-11-29)~~
 * 集成tars打包等相关命令到swoft中
 * 解决引用传参问题
 * 服务端keepalive、property上报
@@ -43,6 +43,8 @@ Swoft集成微服务治理框架Tars
 2. 启动tars-server
 
     cd src
+
+    composer install
 
     php index.php
 
