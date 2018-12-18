@@ -52,13 +52,17 @@ Swoft集成微服务治理框架Tars
     浏览器访问以下地址测试使用tars协议调用的结果
 
     swoft协程调用
+
     http://localhost:7999/rpc/tarsClient
 
     swoft同步调用
+
     http://localhost:7999/rpc/tarsClient1
 
     tars-client方式调用
+
     测试前需要按照tars规范生成tarsclient文件
+
     http://localhost:7999/rpc/tarsClient2
 
 4. 代码打包发布
