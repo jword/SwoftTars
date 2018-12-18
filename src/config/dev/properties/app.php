@@ -20,6 +20,7 @@ return [
         'App\Process',
         'App\Fallback',
         'App\Lib',
+        'App\Servant',
     ],
     'I18n'         => [
         'sourceLanguage' => '@root/resources/messages/',
@@ -30,6 +31,5 @@ return [
     'service'      => require __DIR__ . DS . 'service.php',
     'breaker'      => require __DIR__ . DS . 'breaker.php',
     'provider'     => require __DIR__ . DS . 'provider.php',
-    'tars'         => require __DIR__ . DS . 'tars.php',
     '3rdservice'   => require __DIR__ . DS . '3rdservice.php',
 ];

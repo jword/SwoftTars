@@ -14,7 +14,7 @@ Swoft集成微服务治理框架Tars
 2. Swoole2.0 以上版本
 3. Tars
 
-###实现的特性
+### 实现的特性
 
 * 原生swoft-rpc-server集成tars协议
 * 原生swoft-rpc-client集成tars协议
@@ -22,10 +22,11 @@ Swoft集成微服务治理框架Tars
 * 实现了rpc-client调用时，serveruri按servantName和setid的动态获取
 * 实现了rpc-client的统计上报
 
-###计划实现的特性
+### 计划实现的特性
 
-* ~~服务端异常处理(2018-11-29)~~
-* 集成tars打包等相关命令到swoft中
+* ~~服务端异常处理（2018-11-29）~~
+* ~~集成tars打包等相关命令到swoft中（2018-11-29）~~
+* tars统一的返回结构定义
 * 解决引用传参问题
 * 服务端keepalive、property上报
 * log上报
@@ -34,11 +35,9 @@ Swoft集成微服务治理框架Tars
 
 1. 生成server接口文件和client调用文件
 
-    cd scripts
+    cd src
 
-    ./tars2php.sh
-
-    ./tarsclient.sh
+    php bin/tars tars:tars2php
 
 2. 启动tars-server
 
@@ -59,4 +58,11 @@ Swoft集成微服务治理框架Tars
     http://localhost:7999/rpc/tarsClient1
 
     tars-client方式调用
+    测试前需要按照tars规范生成tarsclient文件
     http://localhost:7999/rpc/tarsClient2
+
+4. 代码打包发布
+
+    cd src
+
+    php bin/tars tars:deploy

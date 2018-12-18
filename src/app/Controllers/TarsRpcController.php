@@ -11,6 +11,8 @@
 namespace App\Controllers;
 
 use App\Lib\DemoInterface;
+use App\Servant\SwoftDemo\Demo\TarsDemo\classes\OutStruct;
+use App\Servant\SwoftDemo\Demo\TarsDemo\classes\SimpleStruct;
 use Swoft\Bean\Annotation\Inject;
 use Swoft\Http\Server\Bean\Annotation\Controller;
 use Swoft\Rpc\Client\Bean\Annotation\Reference;
@@ -50,9 +52,9 @@ class TarsRpcController
     private $logic;
 
     /**
-     * @Reference(name="tars", packer="tarsclient")
+     * @Reference(name="tars")
      *
-     * @var App\Lib\SwoftDemo\Demo\TarsDemo\TarsDemoServiceServant
+     * @var App\Servant\SwoftDemo\Demo\TarsDemo\TarsDemoServiceServant
      */
     private $tarsService;
 
@@ -63,24 +65,42 @@ class TarsRpcController
     {
         $name      = 'ted';
         $greetings = 44;
-        $result1   = $this->tarsService->defertestReturn();
-        $result2   = $this->tarsService->defertestReturn2();
-        $result3   = $this->tarsService->defersayHelloWorld($name, $greetings);
-        $result1   = $result1->getResult();
+        //测试struct return
+        $result1 = $this->tarsService->defertestReturn();
+        //测试map return
+        $result2 = $this->tarsService->defertestReturn2();
+        //测试void
+        $result3 = $this->tarsService->defersayHelloWorld($name, $greetings);
+        //测试struct
+        $c       = new OutStruct;
+        $d       = new SimpleStruct;
+        $result4 = $this->tarsService->defertestStruct(65, $d, $c);
+        //测试basic
+        $result5 = $this->tarsService->defertestBasic(true, 6, 'ddddd');
+        //测试map
+        $b       = new SimpleStruct;
+        $m1      = new \TARS_Map(\TARS::STRING, \TARS::STRING);
+        $result6 = $this->tarsService->defertestMap(6, $d, $m1);
 
-        var_dump('defertestReturn:');
-        var_dump($result1);
+        //vector
+        $v1                   = new \TARS_Vector(\TARS::STRING);
+        $simpleStruct1        = new SimpleStruct();
+        $simpleStruct1->id    = 1;
+        $simpleStruct1->count = 2;
+        $simpleStruct2        = new SimpleStruct();
+        $simpleStruct2->id    = 2;
+        $simpleStruct2->count = 4;
+        $v2                   = [$simpleStruct1, $simpleStruct2];
+        $result7              = $this->tarsService->defertestVector(65, $v1, $v2);
+        $result1              = $result1->getResult();
+        $result2              = $result2->getResult();
+        $result3              = $result3->getResult();
+        $result4              = $result4->getResult();
+        $result5              = $result5->getResult();
+        $result6              = $result6->getResult();
+        $result7              = $result7->getResult();
 
-        var_dump('defertestReturn2:');
-        $result2 = $result2->getResult();
-        var_dump($result2);
-
-        var_dump('defersayHelloWorld:');
-        $result3 = $result3->getResult();
-        var_dump($result3);
-
-        return compact('result1', 'result2', 'result3');
-
+        return compact('result1', 'result2', 'result3', 'result4', 'result5', 'result6', 'result7');
     }
 
     /**
@@ -90,6 +110,9 @@ class TarsRpcController
     {
         $name      = 'ted';
         $greetings = 44;
+        $c         = new OutStruct;
+        $d         = new SimpleStruct;
+        $result1   = $this->tarsService->testStruct(65, $d, $c);
         $result1   = $this->tarsService->testReturn();
         $result2   = $this->tarsService->testReturn2();
         $result3   = $this->tarsService->sayHelloWorld($name, $greetings);
@@ -101,10 +124,23 @@ class TarsRpcController
      */
     public function tarsClient2()
     {
+        $v3 = new \TARS_Vector(\TARS::INT32);
+        $v3->pushBack(intval(2));
+        $v3->pushBack(intval(2));
+
         $routeInfo = [
             ['sIp' => '127.0.0.1', 'iPort' => 8099],
         ];
-        $config = new \Tars\client\CommunicatorConfig();
+        $config               = new \Tars\client\CommunicatorConfig();
+        $v1                   = ['aaa'];
+        $simpleStruct1        = new SimpleStruct();
+        $simpleStruct1->id    = 1;
+        $simpleStruct1->count = 2;
+        $simpleStruct2        = new SimpleStruct();
+        $simpleStruct2->id    = 2;
+        $simpleStruct2->count = 4;
+        $v2                   = [$simpleStruct1, $simpleStruct2];
+
         //$config->setLocator("tars.tarsregistry.QueryObj@tcp -h 192.168.8.58 -p 17890");
         //$config->init(BASE_PATH . '/conf/test.config.conf');
         $config->setRouteInfo($routeInfo);
@@ -114,12 +150,10 @@ class TarsRpcController
         $servant = new \App\TarsClient\SwoftDemo\Demo\TarsDemo\TarsDemoServiceServant($config);
         echo "Service ip and port specified with socket mode 2 (swoole client)\n";
 
-        $result1   = $servant->testReturn();
-        $result2   = $servant->testReturn2();
-        $name      = 'ted';
-        $greetings = 44;
-        $result    = $servant->sayHelloWorld($name, $greetings);
+        $result1 = $servant->testReturn();
+        $result2 = $servant->testReturn2();
+        $result3 = $servant->testVector(65, $v1, $v2, $v3, $v4);
 
-        return compact('result1', 'result2', 'name', 'greetings');
+        return compact('result1', 'result2', 'result3');
     }
 }

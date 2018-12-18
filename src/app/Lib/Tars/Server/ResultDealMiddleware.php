@@ -32,9 +32,10 @@ class ResultDealMiddleware implements MiddlewareInterface
      */
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
+        $data = $request->getAttribute(PackerMiddleware::ATTRIBUTE_DATA);
+        RequestContext::setContextDataByKey('unpackResult', $data['unpackResult']);
         $response      = $handler->handle($request);
         $serviceResult = $response->getAttribute(HandlerAdapter::ATTRIBUTE);
-        $data          = $request->getAttribute(PackerMiddleware::ATTRIBUTE_DATA);
 
         $args = RequestContext::getContextDataByKey('returnargs');
         if (!empty($args)) {

@@ -10,15 +10,15 @@
 
 namespace App\Exception;
 
+use Exception;
 use Swoft\App;
 use Swoft\Bean\Annotation\ExceptionHandler;
 use Swoft\Bean\Annotation\Handler;
+use Swoft\Exception\BadMethodCallException;
 use Swoft\Exception\RuntimeException;
-use Exception;
+use Swoft\Exception\ValidatorException;
 use Swoft\Http\Message\Server\Request;
 use Swoft\Http\Message\Server\Response;
-use Swoft\Exception\BadMethodCallException;
-use Swoft\Exception\ValidatorException;
 use Swoft\Http\Server\Exception\BadRequestException;
 
 /**
@@ -111,7 +111,7 @@ class SwoftExceptionHandler
      */
     public function handlerViewException(Request $request, Response $response, \Throwable $throwable)
     {
-        $name  = $throwable->getMessage(). $request->getUri()->getPath();
+        $name  = $throwable->getMessage() . $request->getUri()->getPath();
         $notes = [
             'New Generation of PHP Framework',
             'High Performance, Coroutine and Full Stack',
@@ -138,7 +138,7 @@ class SwoftExceptionHandler
                 'link' => 'https://github.com/swoft-cloud/swoft',
             ],
         ];
-        $data  = compact('name', 'notes', 'links');
+        $data = compact('name', 'notes', 'links');
 
         return view('exception/index', $data);
     }

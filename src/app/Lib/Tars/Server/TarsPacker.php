@@ -4,6 +4,7 @@ namespace App\Lib\Tars\Server;
 
 use Swoft\App;
 use Swoft\Bean\Annotation\Bean;
+use Swoft\Core\RequestContext;
 use Swoft\Rpc\Packer\PackerInterface;
 use Swoft\Rpc\Server\Bean\Collector\ServiceCollector;
 use Tars\Code;
@@ -26,13 +27,11 @@ class TarsPacker implements PackerInterface
     {
         if ($data['status'] != 200) {
             //异常的情况
-            $unpackResult = [
-                'iVersion'   => 1,
-                'iRequestId' => 0,
-            ];
-            $rspBuf = $this->getProtocol()->packErrRsp($unpackResult, $data['status'], $data['msg']);
+            $unpackResult               = RequestContext::getContextDataByKey('unpackResult');
+            $unpackResult['iVersion']   = 1;
+            $unpackResult['iRequestId'] = isset($unpackResult['iRequestId']) ? $unpackResult['iRequestId'] : 0;
+            $rspBuf                     = $this->getProtocol()->packErrRsp($unpackResult, $data['status'], $data['msg']);
         } else {
-
             $sFuncName    = $data['requestdata']['method'];
             $args         = $data['requestdata']['params'];
             $unpackResult = $data['requestdata']['unpackResult'];
@@ -42,18 +41,18 @@ class TarsPacker implements PackerInterface
             $interface  = new \ReflectionClass($data['requestdata']['interface']);
             $methods    = $interface->getMethods();
             foreach ($methods as $method) {
-                $docblock = $method->getDocComment();
-                // 对于注释也应该有自己的定义和解析的方式
-                $paramInfos[$method->name] = $this->getProtocol()->parseAnnotation($docblock);
+                if ($method->name == $sFuncName) {
+                    $docblock = $method->getDocComment();
+                    // 对于注释也应该有自己的定义和解析的方式
+                    $paramInfo = $this->getProtocol()->parseAnnotation($docblock);
+                }
             }
 
-            if (!isset($paramInfos[$sFuncName])) {
-                return '';
-                //throw new \Exception(Code::TARSSERVERUNKNOWNERR);
+            if (empty($paramInfo)) {
+                throw new \Exception(Code::TARSSERVERUNKNOWNERR);
             }
 
-            $paramInfo = $paramInfos[$sFuncName];
-            $rspBuf    = $this->getProtocol()->packRsp($paramInfo, $unpackResult, $args, $data['data']);
+            $rspBuf = $this->getProtocol()->packRsp($paramInfo, $unpackResult, $args, $data['data']);
         }
         return $rspBuf;
     }
@@ -77,27 +76,24 @@ class TarsPacker implements PackerInterface
         $interface  = new \ReflectionClass($interfaceName);
         $methods    = $interface->getMethods();
         foreach ($methods as $method) {
-            $docblock = $method->getDocComment();
-            // 解析注释
-            $paramInfos[$method->name] = $this->getProtocol()->parseAnnotation($docblock);
+            if ($method->name == $sFuncName) {
+                $docblock = $method->getDocComment();
+                // 对于注释也应该有自己的定义和解析的方式
+                $paramInfo = $this->getProtocol()->parseAnnotation($docblock);
+            }
         }
 
-        if (!isset($paramInfos[$sFuncName])) {
+        if (empty($paramInfo)) {
             throw new \Exception(Code::TARSSERVERUNKNOWNERR);
         }
 
-        $paramInfo = $paramInfos[$sFuncName];
-
         $args = $this->getProtocol()->convertToArgs($paramInfo, $unpackResult);
-
         return [
             'method'       => $sFuncName,
             'version'      => isset($data['version']) ? $data['version'] : 0,
             'interface'    => $interfaceName,
             'params'       => $args,
-            //'args'         => $args,
             'unpackResult' => $unpackResult,
-            //'sFuncName'    => $sFuncName,
         ];
     }
 

@@ -7,11 +7,11 @@
  */
 namespace App\Services;
 
-use App\Lib\SwoftDemo\Demo\TarsDemo\classes\ComplicatedStruct;
-use App\Lib\SwoftDemo\Demo\TarsDemo\classes\LotofTags;
-use App\Lib\SwoftDemo\Demo\TarsDemo\classes\OutStruct;
-use App\Lib\SwoftDemo\Demo\TarsDemo\classes\SimpleStruct;
-use App\Lib\SwoftDemo\Demo\TarsDemo\TarsDemoServiceServant;
+use App\Servant\SwoftDemo\Demo\TarsDemo\classes\ComplicatedStruct;
+use App\Servant\SwoftDemo\Demo\TarsDemo\classes\LotofTags;
+use App\Servant\SwoftDemo\Demo\TarsDemo\classes\OutStruct;
+use App\Servant\SwoftDemo\Demo\TarsDemo\classes\SimpleStruct;
+use App\Servant\SwoftDemo\Demo\TarsDemo\TarsDemoServiceServant;
 use Conf\ENVConf;
 //use Server\cservant\Test\TarsStressServer\StressObj\StressServant;
 use Swoft\Core\ResultInterface;
@@ -39,7 +39,6 @@ class TarsDemoService implements TarsDemoServiceServant
      */
     public function testLofofTags(LotofTags $tags, LotofTags &$outtags)
     {
-        error_log('testLofofTags tags:' . var_export($tags, true), 3, '/data/logs/ted.log');
         $outtags->count = 100;
 
         return 999;
@@ -50,7 +49,6 @@ class TarsDemoService implements TarsDemoServiceServant
      */
     public function sayHelloWorld($name, &$outGreetings)
     {
-        //error_log('sayHelloWorld name:' . $name, 3, '/data/logs/ted.log');
         $outGreetings = 'hello world!';
         return $outGreetings;
     }
@@ -66,10 +64,6 @@ class TarsDemoService implements TarsDemoServiceServant
      */
     public function testBasic($a, $b, $c, &$d, &$e, &$f)
     {
-        error_log('testBasic a:' . $a, 3, '/data/logs/ted.log');
-        error_log('testBasic b:' . $b, 3, '/data/logs/ted.log');
-        error_log('testBasic c:' . $c, 3, '/data/logs/ted.log');
-
         $d = false;
         $e = 111;
         $f = 'here i am';
@@ -85,12 +79,13 @@ class TarsDemoService implements TarsDemoServiceServant
      */
     public function testStruct($a, SimpleStruct $b, OutStruct &$d)
     {
-        error_log('testStruct a:' . $a, 3, '/data/logs/ted.log');
-        error_log('testStruct b:' . var_export($b, true), 3, '/data/logs/ted.log');
+        //error_log('testStruct a:' . $a, 3, '/data/logs/ted.log');
+        //error_log('testStruct b:' . var_export($b, true), 3, '/data/logs/ted.log');
 
-        $d->id = 10000;
+        //$d->id = 10000;
+        $b->id = 999;
 
-        return 'hahaha';
+        return 'ok';
     }
     /**
      * @param short  $a
@@ -103,10 +98,6 @@ class TarsDemoService implements TarsDemoServiceServant
      */
     public function testMap($a, SimpleStruct $b, $m1, OutStruct &$d, &$m2)
     {
-        error_log('testMap a:' . $a, 3, '/data/logs/ted.log');
-        error_log('testMap b:' . var_export($b, true), 3, '/data/logs/ted.log');
-        error_log('testMap m1:' . var_export($m1, true), 3, '/data/logs/ted.log');
-
         $d->page          = 1024;
         $simpleStruct     = new SimpleStruct();
         $simpleStruct->id = 888;
@@ -126,19 +117,13 @@ class TarsDemoService implements TarsDemoServiceServant
      */
     public function testVector($a, $v1, $v2, &$v3, &$v4)
     {
-        error_log('testVector a:' . $a, 3, '/data/logs/ted.log');
-        error_log('testVector v1:' . var_export($v1, true), 3, '/data/logs/ted.log');
-        error_log('testVector v2:' . var_export($v2, true), 3, '/data/logs/ted.log');
-
-        $v3->pushBack(111);
-        $v3->pushBack(222);
+        /*$v3->pushBack(111);
+        $v3->pushBack(222);*/
 
         $outStruct     = new OutStruct();
         $outStruct->id = 888;
         $v4->pushBack($outStruct);
-
         $v4->pushBack($outStruct);
-
         return 'not very happy';
     }
     /**
@@ -146,8 +131,6 @@ class TarsDemoService implements TarsDemoServiceServant
      */
     public function testReturn()
     {
-        //error_log('testReturn:', 3, '/data/logs/ted.log');
-
         $simpleStruct     = new SimpleStruct();
         $simpleStruct->id = 999999;
 
@@ -158,8 +141,6 @@ class TarsDemoService implements TarsDemoServiceServant
      */
     public function testReturn2()
     {
-        //error_log('testReturn2:', 3, '/data/logs/ted.log');
-
         $map = new \TARS_Map(\TARS::STRING, \TARS::STRING);
         $map->pushBack(['this is map test1', 'this is map test2']);
 
@@ -175,9 +156,6 @@ class TarsDemoService implements TarsDemoServiceServant
      */
     public function testComplicatedStruct(ComplicatedStruct $cs, $vcs, ComplicatedStruct &$ocs, &$ovcs)
     {
-        error_log('testComplicatedStruct: cs' . var_export($cs, true), 3, '/data/logs/ted.log');
-        error_log('testComplicatedStruct: vcs' . var_export($vcs, true), 3, '/data/logs/ted.log');
-
         $ocs      = new ComplicatedStruct();
         $ocs->str = 'sss';
         $sim      = new SimpleStruct();
@@ -201,8 +179,6 @@ class TarsDemoService implements TarsDemoServiceServant
      */
     public function testComplicatedMap($mcs, &$omcs)
     {
-        error_log('testComplicatedMap: mcs' . var_export($mcs, true), 3, '/data/logs/ted.log');
-
         $com      = new ComplicatedStruct();
         $com->str = 'sss';
         $sim      = new SimpleStruct();
@@ -225,8 +201,6 @@ class TarsDemoService implements TarsDemoServiceServant
      */
     public function testEmpty($a, &$b1, &$in2, OutStruct &$d, &$v3, &$v4)
     {
-        error_log('testEmpty a:' . $a, 3, '/data/logs/ted.log');
-
         return -99;
     }
     /**
@@ -234,8 +208,6 @@ class TarsDemoService implements TarsDemoServiceServant
      */
     public function testSelf()
     {
-        error_log('testSelf request:');
-
         // 这里请求一个其他的taf
         $config = new CommunicatorConfig();
         $config->setLocator(ENVConf::$locator);

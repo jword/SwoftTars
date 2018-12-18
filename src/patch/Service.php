@@ -2,6 +2,7 @@
 
 namespace Swoft\Rpc\Client;
 
+use App\Lib\Tars\Client\TarsHelper;
 use Swoft\App;
 use Swoft\Core\ResultInterface;
 use Swoft\Helper\JsonHelper;
@@ -87,11 +88,7 @@ class Service
         try {
             $type = $this->getPackerName();
             if ($type == 'tarsclient') {
-                $config      = App::$properties['tars'];
-                $servant     = str_replace($config['ServerNamespacePrefix'], '', $this->interface);
-                $servant     = explode('\\', $servant);
-                $servantName = $servant[1] . '.' . $servant[2] . '.' . $servant[3];
-                \Swoft\Core\RequestContext::setContextDataByKey('servantName', $servantName);
+                $servantName = TarsHelper::getDefineByInterface($this->interface)['servant'];
             }
             $connectPool    = $this->getPool();
             $circuitBreaker = $this->getBreaker();
@@ -162,7 +159,7 @@ class Service
             $data = PhpHelper::call($fallback, $params);
             //上报异常
             if ($type == 'tarsclient') {
-                \App\Lib\Client\Helper::report($servantName, $func, $throwable->getCode());
+                \App\Lib\Tars\Client\Helper::report($servantName, $func, $throwable->getCode());
             }
         }
 
@@ -210,21 +207,16 @@ class Service
         try {
             $type = $this->getPackerName();
             if ($type == 'tarsclient') {
-                $config      = App::$properties['tars'];
-                $servant     = str_replace($config['ServerNamespacePrefix'], '', $this->interface);
-                $servant     = explode('\\', $servant);
-                $servantName = $servant[1] . '.' . $servant[2] . '.' . $servant[3];
-                \Swoft\Core\RequestContext::setContextDataByKey('servantName', $servantName);
+                $servantName = TarsHelper::getDefineByInterface($this->interface)['servant'];
             }
             $connectPool    = $this->getPool();
             $circuitBreaker = $this->getBreaker();
 
             /* @var ConnectionInterface $connection */
             $connection = $connectPool->getConnection();
-
-            $packer   = service_packer();
-            $data     = $packer->formatData($this->interface, $this->version, $func, $params);
-            $packData = $packer->pack($data, $type);
+            $packer     = service_packer();
+            $data       = $packer->formatData($this->interface, $this->version, $func, $params);
+            $packData   = $packer->pack($data, $type);
 
             $result = $circuitBreaker->call([$connection, 'send'], [$packData], $fallback);
 
@@ -239,7 +231,7 @@ class Service
             $connection = null;
             $result     = PhpHelper::call($fallback, $params);
             if ($type == 'tarsclient') {
-                \App\Lib\Client\Helper::report($servantName, $func, $throwable->getCode());
+                \App\Lib\Tars\Client\Helper::report($servantName, $func, $throwable->getCode());
             }
         }
 
@@ -299,6 +291,8 @@ class Service
         if (empty($this->packerName)) {
             if (isset(App::$properties[$this->poolName]['packer'])) {
                 $this->packerName = App::$properties[$this->poolName]['packer'];
+            } elseif (isset(App::$properties[$this->name]['packer'])) {
+                $this->packerName = App::$properties[$this->name]['packer'];
             }
         }
 

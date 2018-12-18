@@ -20,6 +20,7 @@ return [
         'App\Process',
         'App\Fallback',
         'App\Lib',
+        'App\Servant',
     ],
     'I18n'         => [
         'sourceLanguage' => '@root/resources/messages/',

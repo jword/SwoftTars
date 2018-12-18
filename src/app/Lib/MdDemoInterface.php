@@ -15,7 +15,13 @@ namespace App\Lib;
  */
 interface MdDemoInterface
 {
+    /**
+     * @return array
+     */
     public function parentMiddleware();
 
+    /**
+     * @return array
+     */
     public function funcMiddleware();
 }

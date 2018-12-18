@@ -43,5 +43,8 @@ interface DemoInterface
      */
     public function getUser(string $id);
 
+    /**
+     * @return array
+     */
     public function getUserByCond(int $type, int $uid, string $name, float $price, string $desc = 'desc');
 }

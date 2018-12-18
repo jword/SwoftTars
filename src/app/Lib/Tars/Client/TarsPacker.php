@@ -6,6 +6,7 @@ use Swoft\App;
 use Swoft\Bean\Annotation\Bean;
 use Swoft\Core\RequestContext;
 use Swoft\Rpc\Packer\PackerInterface;
+use Tars\client\RequestPacket;
 
 /**
  * Class TarsPacker
@@ -13,6 +14,7 @@ use Swoft\Rpc\Packer\PackerInterface;
  */
 class TarsPacker implements PackerInterface
 {
+    private $iVersion = 3;
     /**
      * pack data
      *
@@ -22,22 +24,20 @@ class TarsPacker implements PackerInterface
      */
     public function pack($data): string
     {
-        RequestContext::setContextDataByKey('requestparams', $data['params']);
-        $config      = App::$properties['tars'];
-        $clientClass = str_replace($config['ServerNamespacePrefix'], $config['clientNamespacePrefix'], $data['interface']);
-        $config      = new \Tars\client\CommunicatorConfig();
-        $servant     = new $clientClass($config, true);
-        if (empty(\config($servant->_servantName))) {
-            \Swoft::getBean('config')->set($servant->_servantName, $clientClass);
+        $requestPacket               = new RequestPacket();
+        $requestPacket->_iVersion    = $this->iVersion;
+        $requestPacket->_funcName    = $data['method'];
+        $requestPacket->_servantName = TarsHelper::getDefineByInterface($data['interface'])['servant'];
+        $requestPacket->_encodeBufs  = TarsHelper::pack($data, $this->iVersion);
+        if ($this->iVersion == 1) {
+            $reqs         = RequestContext::getContextDataByKey('reqs');
+            $reqs         = is_array($reqs) ? $reqs : [];
+            $reqid        = count($reqs);
+            $reqs[$reqid] = ['servantName' => $requestPacket->_servantName, 'method' => $data['method']];
+            RequestContext::setContextDataByKey('reqs', $reqs);
         }
-
-        $servant->getrequest     = true;
-        $servant->getresponse    = false;
-        $servant->notinvoke      = true;
-        $method                  = $data['method'];
-        $requestBuf              = $servant->$method(...$data['params']);
-        $requestBuf->_iRequestId = $data['spanid'];
-        return $requestBuf->encode();
+        $requestPacket->_iRequestId = isset($reqid) ? $reqid : $data['spanid'];
+        return $requestPacket->encode();
     }
 
     /**
@@ -49,30 +49,32 @@ class TarsPacker implements PackerInterface
      */
     public function unpack($data)
     {
-        $decodeRet = \TUPAPI::decode($data);
+        $decodeRet = \TUPAPI::decode($data, $this->iVersion);
+        if (isset($decodeRet['sServantName']) && empty($decodeRet['sServantName'])) {
+            $decodeRet = \TUPAPI::decode($data, 1);
+        }
+
         if ($decodeRet['iRet'] !== 0) {
+            if (APP_ENV == 'dev') {
+                throw new \Exception($decodeRet['sResultDesc'], $decodeRet['iRet']);
+            }
+
             $msg = isset($decodeRet['sResultDesc']) ? $decodeRet['sResultDesc'] : "";
             return [
-                'status' => 600,
+                'status' => $decodeRet['iRet'],
                 'msg'    => $msg,
                 'data'   => '',
             ];
         }
 
-        $clientClass = \config($decodeRet['sServantName']);
-        if (empty($clientClass)) {
-            return ['status' => 600, 'msg' => '返回的数据包有误', 'data' => ''];
+        if ($this->iVersion == 1) {
+            $data                      = RequestContext::getContextDataByKey('reqs');
+            $decodeRet['sServantName'] = $data[$decodeRet['iRequestId']]['servantName'];
+            $decodeRet['sFuncName']    = $data[$decodeRet['iRequestId']]['method'];
         }
-        $config                  = new \Tars\client\CommunicatorConfig();
-        $servant                 = new $clientClass($config, true);
-        $servant->getrequest     = false;
-        $servant->getresponse    = true;
-        $servant->notinvoke      = true;
-        $servant->responseBuffer = $decodeRet['sBuffer'];
-        $method                  = $decodeRet['sFuncName'];
-        $params                  = RequestContext::getContextDataByKey('requestparams');
-        $returnVal               = $servant->$method(...$params);
-        //RequestContext::setContextDataByKey('requestparams', $params);
+
+        $returnVal = TarsHelper::unpack($decodeRet, $this->iVersion, $outParams);
+
         return [
             'status'       => 200,
             'msg'          => '',

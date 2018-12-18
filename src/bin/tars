@@ -1,0 +1,16 @@
+#!/usr/bin/env php
+<?php
+define('APP_ENV', 'tars');
+//框架引入
+require_once dirname(__DIR__) . '/vendor/autoload.php';
+require_once dirname(__DIR__) . '/config/define.php';
+
+// 初始化工厂容器
+\Swoft\Bean\BeanFactory::init();
+
+/* @var \Swoft\Bootstrap\Boots\Bootable $bootstrap*/
+$bootstrap = \Swoft\App::getBean(\Swoft\Bootstrap\Bootstrap::class);
+$bootstrap->bootstrap();
+
+$console = new \Swoft\Console\Console();
+$console->run();

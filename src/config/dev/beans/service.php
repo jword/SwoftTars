@@ -1,7 +1,7 @@
 <?php
 return [
     'servicePacker'     => [
-        'defaultPacker' => RPC_PROTOCOL == 'tars' ? 'tars' : 'json',
+        'defaultPacker' => defined('RPC_PROTOCOL') ? RPC_PROTOCOL : 'json',
         'packers'       => [
             'tars'       => \App\Lib\Tars\Server\TarsPacker::class,
             'tarsclient' => \App\Lib\Tars\Client\TarsPacker::class,
