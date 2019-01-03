@@ -2,7 +2,7 @@
 
 namespace App\Lib\Tars\Client;
 
-use App\Lib\Tars\Client\TarsDefinition;
+use App\Lib\Tars\Common\Helper;
 use Tars\client\TUPAPIWrapper;
 
 /**
@@ -10,14 +10,13 @@ use Tars\client\TUPAPIWrapper;
  */
 class TarsHelper
 {
-    private static $protocol;
     /**
      * 打包请求数据
      */
     public static function pack($data, $iVersion)
     {
-        $definitions = self::getDefineByInterface($data['interface']);
-        $inParams    = $definitions['methods'][$data['method']]['inParams'];
+        $definitions = Helper::getDefineByInterface($data['interface'], $data['method']);
+        $inParams    = $definitions['inParams'];
         $encodeBufs  = [];
         foreach ($inParams as $param) {
             $type = $param['type'];
@@ -28,21 +27,21 @@ class TarsHelper
             $paramvalue = $data['params'][$index - 1];
             // 判断如果是vector需要特别的处理
             if (Utils::isVector($type)) {
-                $vec = self::getProtocol()->createInstance($param['proto']);
+                $vec = Helper::getProtocol()->createInstance($param['proto']);
                 foreach ($paramvalue as $value) {
                     $vec->pushBack($value);
                 }
-                $__buffer = TUPAPIWrapper::$packMethod($valueName, $index, $vec, $iVersion);
+                $buffer = TUPAPIWrapper::$packMethod($valueName, $index, $vec, $iVersion);
             } elseif (Utils::isMap($type)) {
-                $map = self::getProtocol()->createInstance($param['proto']);
+                $map = Helper::getProtocol()->createInstance($param['proto']);
                 foreach ($paramvalue as $key => $value) {
                     $map->pushBack([$key => $value]);
                 }
-                $__buffer = TUPAPIWrapper::$packMethod($valueName, $index, $map, $iVersion);
+                $buffer = TUPAPIWrapper::$packMethod($valueName, $index, $map, $iVersion);
             } else {
-                $__buffer = TUPAPIWrapper::$packMethod($valueName, $index, $paramvalue, $iVersion);
+                $buffer = TUPAPIWrapper::$packMethod($valueName, $index, $paramvalue, $iVersion);
             }
-            $encodeBufs[$valueName] = $__buffer;
+            $encodeBufs[$valueName] = $buffer;
         }
         return $encodeBufs;
     }
@@ -56,16 +55,15 @@ class TarsHelper
     public static function unpack($data, $iVersion, &$outParams)
     {
         $sBuffer     = $data['sBuffer'];
-        $definitions = self::getDefineByServant($data['sServantName']);
-        $outParams   = $definitions[$data['sFuncName']]['outParams'];
-        $returnInfo  = $definitions[$data['sFuncName']]['return'];
-        $outParams   = self::getOutParams($outParams, $data['sBuffer'], $iVersion);
+        $definitions = Helper::getDefineByServant($data['sServantName'], $data['sFuncName']);
+        $returnInfo  = $definitions['return'];
+        $outParams   = self::getOutParams($definitions['outParams'], $data['sBuffer'], $iVersion);
         // 还要尝试去获取一下接口的返回码哦
         $returnUnpack = Utils::getUnpackMethods($returnInfo['type']);
 
         if ($returnInfo['type'] !== 'void') {
             if (Utils::isVector($returnInfo['type']) || Utils::isMap($returnInfo['type'])) {
-                $ret = self::getProtocol()->createInstance($returnInfo['proto']);
+                $ret = Helper::getProtocol()->createInstance($returnInfo['proto']);
                 return TUPAPIWrapper::$returnUnpack("", $returnInfo['tag'], $ret, $sBuffer, $iVersion);
             } elseif (Utils::isStruct($returnInfo['type'])) {
                 $returnVal = new $returnInfo['proto']();
@@ -93,7 +91,7 @@ class TarsHelper
             } else {
                 // 判断如果是vector需要特别的处理
                 if (Utils::isVector($type) || Utils::isMap($type)) {
-                    $ret         = self::getProtocol()->createInstance($param['proto']);
+                    $ret         = Helper::getProtocol()->createInstance($param['proto']);
                     $data[$name] = TUPAPIWrapper::$unpackMethods($name, $index, $ret, $sBuffer, $iVersion);
                 } elseif (Utils::isStruct($type)) {
                     $$name       = new $param['proto']();
@@ -105,31 +103,84 @@ class TarsHelper
         return $data;
     }
 
-    public static function getDefineByInterface($interface)
+    public static function getServantByInterface($interface)
     {
-        if (!isset(TarsDefinition::$definitions[$interface])) {
-            throw new \Exception("接口{$interface}的定义信息不存在", 600);
-        }
-
-        return TarsDefinition::$definitions[$interface];
+        return Helper::getServantByInterface($interface);
     }
 
-    public static function getDefineByServant($servant)
+    /**
+     * 上报tars请求结果
+     */
+    public static function report($interface, $funcName, $code = 0, $ip = '', $port = '')
     {
-        $definitions = TarsDefinition::$definitions;
-        $interfaces  = array_column($definitions, 'methods', 'servant');
-        if (!isset($interfaces[$servant])) {
-            throw new \Exception("servant {$servant} 的定义信息不存在", 600);
+        $config = \Tars\Conf::get();
+        if (empty($config)) {
+            return true;
         }
-        return $interfaces[$servant];
+        $servantName    = \App\Lib\Tars\Common\Helper::getServantByInterface($interface);
+        $locator        = $config['tars']['application']['client']['locator'];
+        $socketMode     = self::getsocketMode();
+        $startTime      = \Swoft\Core\RequestContext::getContextDataByKey('requestTime');
+        $reportInterval = empty($config['tars']['application']['client']['report-interval']) ? 60000 : $config['tars']['application']['client']['report-interval'];
+        $statf          = new StatFWrapper($locator, $socketMode,
+            $config['tars']['application']['client']['stat'], $servantName, $reportInterval);
+        $runtime = self::militime((microtime(true) - $startTime));
+        $statf->addStat($servantName, $funcName, $ip, $port, $runtime, $code, $code);
+        return true;
     }
 
-    public static function getProtocol()
+    public static function getUri()
     {
-        if (!is_object(self::$protocol)) {
-            self::$protocol = new \App\Lib\Tars\Client\TARSProtocol();
-        }
+        $servantName = \Swoft\Core\RequestContext::getContextDataByKey('servantName');
+        if ($servantName) {
+            //从配置中读取
+            $config = \Tars\Conf::get();
+            if (empty($config)) {
+                return null;
+            }
+            if ($config['tars']['application']['enableset'] == 'Y') {
+                $setid = $config['tars']['application']['setdivision'];
+            }
 
-        return self::$protocol;
+            $socketMode = self::getsocketMode();
+            $locator    = $config['tars']['application']['client']['locator'];
+            $query      = new QueryFWrapper($locator, $socketMode);
+
+            if (!empty($setid)) {
+                $activeEp = $inactiveEp = null;
+                $routes   = $query->findObjectByIdInSameSet($servantName, $setid, $activeEp, $inactiveEp);
+            } else {
+                $routes = $query->findObjectById($servantName);
+            }
+
+            if (!empty($routes)) {
+                $uri = [];
+                foreach ($routes as $v) {
+                    $uri[] = $v['sIp'] . ':' . $v['iPort'];
+                }
+                return $uri;
+            }
+        }
+        return null;
+    }
+
+    public static function getsocketMode()
+    {
+        if (\Swoft\App::isCoContext()) {
+            $socketMode = 3;
+        } else {
+            $socketMode = 2;
+        }
+        return $socketMode;
+    }
+
+    public static function militime($microtime = null)
+    {
+        if (empty($microtime)) {
+            $microtime = microtime(true);
+        }
+        $miliseconds = (float) sprintf('%.0f', $microtime * 1000);
+
+        return $miliseconds;
     }
 }

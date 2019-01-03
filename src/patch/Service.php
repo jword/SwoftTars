@@ -86,15 +86,12 @@ class Service
         $closeStatus = true;
 
         try {
-            $type = $this->getPackerName();
-            if ($type == 'tarsclient') {
-                $servantName = TarsHelper::getDefineByInterface($this->interface)['servant'];
-            }
             $connectPool    = $this->getPool();
             $circuitBreaker = $this->getBreaker();
 
             /* @var $client AbstractServiceConnection */
             $client = $connectPool->getConnection();
+            $type   = $this->getPackerName();
             $packer = service_packer();
 
             $data     = $packer->formatData($this->interface, $this->version, $func, $params);
@@ -139,7 +136,7 @@ class Service
             $data        = $packer->checkData($result);
             //上报结果
             if ($type == 'tarsclient') {
-                \App\Lib\Tars\Client\Helper::report($servantName, $func, 0);
+                TarsHelper::report($this->interface, $func, 0);
             }
         } catch (\Throwable $throwable) {
             // If the client is normal, no need to close it.
@@ -159,7 +156,7 @@ class Service
             $data = PhpHelper::call($fallback, $params);
             //上报异常
             if ($type == 'tarsclient') {
-                \App\Lib\Tars\Client\Helper::report($servantName, $func, $throwable->getCode());
+                TarsHelper::report($this->interface, $func, $throwable->getCode());
             }
         }
 
@@ -205,15 +202,12 @@ class Service
         $fallback   = $this->getFallbackHandler($func);
 
         try {
-            $type = $this->getPackerName();
-            if ($type == 'tarsclient') {
-                $servantName = TarsHelper::getDefineByInterface($this->interface)['servant'];
-            }
             $connectPool    = $this->getPool();
             $circuitBreaker = $this->getBreaker();
 
             /* @var ConnectionInterface $connection */
             $connection = $connectPool->getConnection();
+            $type       = $this->getPackerName();
             $packer     = service_packer();
             $data       = $packer->formatData($this->interface, $this->version, $func, $params);
             $packData   = $packer->pack($data, $type);
@@ -231,7 +225,7 @@ class Service
             $connection = null;
             $result     = PhpHelper::call($fallback, $params);
             if ($type == 'tarsclient') {
-                \App\Lib\Tars\Client\Helper::report($servantName, $func, $throwable->getCode());
+                TarsHelper::report($this->interface, $func, $throwable->getCode());
             }
         }
 

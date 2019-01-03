@@ -1,11 +1,11 @@
 <?php
 namespace App\Services;
 
-use App\Servant\SwoftDemo\Demo\TarsDemo\classes\ComplicatedStruct;
-use App\Servant\SwoftDemo\Demo\TarsDemo\classes\LotofTags;
-use App\Servant\SwoftDemo\Demo\TarsDemo\classes\OutStruct;
-use App\Servant\SwoftDemo\Demo\TarsDemo\classes\SimpleStruct;
-use App\Servant\SwoftDemo\Demo\TarsDemo\TarsDemoServiceServant;
+use App\Servant\Swoft\Demo\Demo\classes\ComplicatedStruct;
+use App\Servant\Swoft\Demo\Demo\classes\LotofTags;
+use App\Servant\Swoft\Demo\Demo\classes\OutStruct;
+use App\Servant\Swoft\Demo\Demo\classes\SimpleStruct;
+use App\Servant\Swoft\Demo\Demo\TarsDemoServiceServant;
 use Conf\ENVConf;
 //use Server\cservant\Test\TarsStressServer\StressObj\StressServant;
 use Swoft\Core\ResultInterface;
@@ -19,7 +19,7 @@ use Tars\monitor\PropertyFWrapper;
  * @method ResultInterface testReturn()
  * @Service()
  */
-class TarsDemoService implements TarsDemoServiceServant
+class TarsDemoService2 implements TarsDemoServiceServant
 {
     public function testTafServer()
     {

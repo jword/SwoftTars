@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Lib\Tars\Client;
+namespace App\Lib\Tars\Common;
 
+use App\Lib\Tars\Common\TARSProtocol;
 use Swoft\Bean\Annotation\Definition;
 use Swoft\Bean\DefinitionInterface;
 use Swoft\Rpc\Client\Bean\Collector\ReferenceCollector;
@@ -13,6 +14,7 @@ use Swoft\Rpc\Client\Bean\Collector\ReferenceCollector;
 class TarsDefinition implements DefinitionInterface
 {
     public static $definitions;
+    public static $servicemap;
     /**
      * array
      */
@@ -54,14 +56,12 @@ class TarsDefinition implements DefinitionInterface
             foreach ($methods as $method) {
                 $docblock = $method->getDocComment();
                 // 解析注释
-                $protocol                  = new \App\Lib\Tars\Client\TARSProtocol();
+                $protocol                  = new TARSProtocol();
                 $paramInfos[$method->name] = $protocol->parseAnnotation($docblock);
             }
 
-            self::$definitions[$interfaceClass] = [
-                'methods' => $paramInfos,
-                'servant' => $servant,
-            ];
+            self::$definitions[$servant]       = $paramInfos;
+            self::$servicemap[$interfaceClass] = $servant;
         }
 
         return [];

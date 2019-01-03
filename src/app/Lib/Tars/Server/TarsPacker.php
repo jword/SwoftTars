@@ -2,12 +2,11 @@
 
 namespace App\Lib\Tars\Server;
 
+use App\Lib\Tars\Common\Helper;
 use Swoft\App;
 use Swoft\Bean\Annotation\Bean;
 use Swoft\Core\RequestContext;
 use Swoft\Rpc\Packer\PackerInterface;
-use Swoft\Rpc\Server\Bean\Collector\ServiceCollector;
-use Tars\Code;
 
 /**
  * Class TarsPacker
@@ -16,12 +15,12 @@ use Tars\Code;
 class TarsPacker implements PackerInterface
 {
     protected $protocol;
+
     /**
      * pack data
      *
      * @param mixed $data
      * @return string
-     * @throws \InvalidArgumentException
      */
     public function pack($data): string
     {
@@ -30,30 +29,17 @@ class TarsPacker implements PackerInterface
             $unpackResult               = RequestContext::getContextDataByKey('unpackResult');
             $unpackResult['iVersion']   = 1;
             $unpackResult['iRequestId'] = isset($unpackResult['iRequestId']) ? $unpackResult['iRequestId'] : 0;
-            $rspBuf                     = $this->getProtocol()->packErrRsp($unpackResult, $data['status'], $data['msg']);
+            $rspBuf                     = Helper::getProtocol()->packErrRsp($unpackResult, $data['status'], $data['msg']);
         } else {
             $sFuncName    = $data['requestdata']['method'];
             $args         = $data['requestdata']['params'];
             $unpackResult = $data['requestdata']['unpackResult'];
 
-            //优化
-            $paramInfos = [];
-            $interface  = new \ReflectionClass($data['requestdata']['interface']);
-            $methods    = $interface->getMethods();
-            foreach ($methods as $method) {
-                if ($method->name == $sFuncName) {
-                    $docblock = $method->getDocComment();
-                    // 对于注释也应该有自己的定义和解析的方式
-                    $paramInfo = $this->getProtocol()->parseAnnotation($docblock);
-                }
-            }
+            $paramInfo = Helper::getDefineByServant($unpackResult['sServantName'], $sFuncName);
 
-            if (empty($paramInfo)) {
-                throw new \Exception(Code::TARSSERVERUNKNOWNERR);
-            }
-
-            $rspBuf = $this->getProtocol()->packRsp($paramInfo, $unpackResult, $args, $data['data']);
+            $rspBuf = Helper::getProtocol()->packRsp($paramInfo, $unpackResult, $args, $data['data']);
         }
+
         return $rspBuf;
     }
 
@@ -62,32 +48,17 @@ class TarsPacker implements PackerInterface
      *
      * @param mixed $data
      * @return mixed
-     * @throws \InvalidArgumentException
      */
     public function unpack($data)
     {
-        $unpackResult  = $this->getProtocol()->unpackReq($data);
+        $unpackResult  = Helper::getProtocol()->unpackReq($data);
         $sServantName  = $unpackResult['sServantName'];
         $sFuncName     = $unpackResult['sFuncName'];
-        $interfaceName = $this->getInterface($sServantName);
+        $interfaceName = Helper::getInterfaceByServant($sServantName);
+        $paramInfo     = Helper::getDefineByServant($sServantName, $sFuncName);
 
-        //优化
-        $paramInfos = [];
-        $interface  = new \ReflectionClass($interfaceName);
-        $methods    = $interface->getMethods();
-        foreach ($methods as $method) {
-            if ($method->name == $sFuncName) {
-                $docblock = $method->getDocComment();
-                // 对于注释也应该有自己的定义和解析的方式
-                $paramInfo = $this->getProtocol()->parseAnnotation($docblock);
-            }
-        }
+        $args = Helper::getProtocol()->convertToArgs($paramInfo, $unpackResult);
 
-        if (empty($paramInfo)) {
-            throw new \Exception(Code::TARSSERVERUNKNOWNERR);
-        }
-
-        $args = $this->getProtocol()->convertToArgs($paramInfo, $unpackResult);
         return [
             'method'       => $sFuncName,
             'version'      => isset($data['version']) ? $data['version'] : 0,
@@ -95,32 +66,5 @@ class TarsPacker implements PackerInterface
             'params'       => $args,
             'unpackResult' => $unpackResult,
         ];
-    }
-
-    private function getProtocol()
-    {
-        if (!is_object($this->protocol)) {
-            $this->protocol = new \Tars\protocol\TARSProtocol();
-        }
-
-        return $this->protocol;
-    }
-
-    /**
-     * 根据sServantName获取接口名称
-     * @return $interface
-     */
-    private function getInterface($servantName)
-    {
-        $preg           = str_replace('.', '\\', $servantName);
-        $interface      = '';
-        $serviceMapping = ServiceCollector::getCollector();
-        foreach ($serviceMapping as $k => $v) {
-            if (strpos($k, $preg) !== false) {
-                $interface = $k;
-                break;
-            }
-        }
-        return $interface;
     }
 }

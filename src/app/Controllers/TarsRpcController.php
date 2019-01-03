@@ -59,6 +59,13 @@ class TarsRpcController
     private $tarsService;
 
     /**
+     * @Reference(name="tars")
+     *
+     * @var App\Servant\Swoft\Demo\Demo\TarsDemoServiceServant
+     */
+    private $tarsService2;
+
+    /**
      * swoft-rpc-tars-client协程调用测试
      */
     public function tarsClient()
@@ -155,5 +162,21 @@ class TarsRpcController
         $result3 = $servant->testVector(65, $v1, $v2, $v3, $v4);
 
         return compact('result1', 'result2', 'result3');
+    }
+
+    /**
+     *  swoft-rpc-tars-client多servant调用测试
+     */
+    public function tarsClient3()
+    {
+        $name      = 'ted';
+        $greetings = 44;
+        $c         = new OutStruct;
+        $d         = new SimpleStruct;
+        $result1   = $this->tarsService->testStruct(65, $d, $c);
+        $result1   = $this->tarsService2->testReturn();
+        $result2   = $this->tarsService->testReturn2();
+        $result3   = $this->tarsService2->sayHelloWorld($name, $greetings);
+        return compact('result1', 'result2', 'result3', 'greetings');
     }
 }

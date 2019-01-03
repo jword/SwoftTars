@@ -6,7 +6,7 @@
  * Time: 下午4:53.
  */
 
-namespace App\Lib\Tars\Client;
+namespace App\Lib\Tars\Common;
 
 use Tars\Code;
 use Tars\core\Request;

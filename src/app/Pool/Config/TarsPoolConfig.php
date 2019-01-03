@@ -127,7 +127,7 @@ class TarsPoolConfig extends PoolProperties
      */
     public function getUri(): array
     {
-        if ($uri = \App\Lib\Tars\Client\Helper::getUri()) {
+        if ($uri = \App\Lib\Tars\Client\TarsHelper::getUri()) {
             return $uri;
         }
 

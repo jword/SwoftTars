@@ -27,8 +27,9 @@ class TarsPacker implements PackerInterface
         $requestPacket               = new RequestPacket();
         $requestPacket->_iVersion    = $this->iVersion;
         $requestPacket->_funcName    = $data['method'];
-        $requestPacket->_servantName = TarsHelper::getDefineByInterface($data['interface'])['servant'];
+        $requestPacket->_servantName = TarsHelper::getServantByInterface($data['interface']);
         $requestPacket->_encodeBufs  = TarsHelper::pack($data, $this->iVersion);
+
         if ($this->iVersion == 1) {
             $reqs         = RequestContext::getContextDataByKey('reqs');
             $reqs         = is_array($reqs) ? $reqs : [];
@@ -36,6 +37,7 @@ class TarsPacker implements PackerInterface
             $reqs[$reqid] = ['servantName' => $requestPacket->_servantName, 'method' => $data['method']];
             RequestContext::setContextDataByKey('reqs', $reqs);
         }
+
         $requestPacket->_iRequestId = isset($reqid) ? $reqid : $data['spanid'];
         return $requestPacket->encode();
     }
@@ -76,10 +78,9 @@ class TarsPacker implements PackerInterface
         $returnVal = TarsHelper::unpack($decodeRet, $this->iVersion, $outParams);
 
         return [
-            'status'       => 200,
-            'msg'          => '',
-            'data'         => $returnVal ?: '',
-            'unpackResult' => $decodeRet,
+            'status' => 200,
+            'msg'    => '',
+            'data'   => $returnVal ?: '',
         ];
     }
 }

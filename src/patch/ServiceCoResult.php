@@ -37,7 +37,8 @@ class ServiceCoResult extends AbstractResult
             $data   = $packer->checkData($result);
             //上报结果
             if ($this->packerName == 'tarsclient') {
-                \App\Lib\Tars\Client\Helper::report($result['unpackResult']['sServantName'], $result['unpackResult']['sFuncName'], 0);
+                $profile = explode('->', $this->profileKey);
+                \App\Lib\Tars\Client\TarsHelper::report($profile[0], $profile[1], 0);
             }
         } catch (\Throwable $throwable) {
             if (empty($this->fallbackData)) {
